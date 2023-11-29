@@ -44,7 +44,8 @@ def calc(galname, max_age=None, num_snaps=1):
     gal_df = staudt_tools.init_df()
 
     print('==================================================================')
-    run_name = galname + '_res' + gal_df.loc[galname, 'res']
+    run_name = 'm12' + gal_df.loc[galname, 'fsuffix'] \
+               + '_res' + gal_df.loc[galname, 'res']
     if galname in ['Romeo', 'Juliet', 'Romulus', 'Remus', 'Thelma', 'Louise']:
         # 2 hosts for ELVIS runs
         host_num = 2
