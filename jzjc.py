@@ -243,14 +243,16 @@ def getoptions():
               ' (z=0) and going backwards in time. The default is 1.')
     )
     args = parser.parse_args()
-    print(type(args))
     return args
 
 def main():
     args = getoptions()
     galname = args.galname[0]
     max_age = args.max_age
-    calc(galname, max_age)
+    num_snaps = args.num_snaps
+
+    calc(galname, max_age, num_snaps)
+
     return None
 
 if __name__ == '__main__':
