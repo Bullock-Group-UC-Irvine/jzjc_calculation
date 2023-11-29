@@ -170,7 +170,7 @@ def calc(galname, max_age=None, num_snaps=1):
                 # within 5 Myr of the given lookback time, not 500 Myr -PS
 
                 # Max stellar age string to use in the filename:
-                max_age_str = '_{0:0.0f}Myr'.format(max_age * 100.)
+                max_age_str = '_{0:0.0f}Myr'.format(max_age * 1.e3)
             else:
                 young_mask = np.repeat(True, len(sft_lbt))
                 # Don't add any max stellar age info to the filename:
