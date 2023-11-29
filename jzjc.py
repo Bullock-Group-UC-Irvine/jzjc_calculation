@@ -249,6 +249,8 @@ def main():
     args = getoptions()
     galname = args.galname[0]
     max_age = args.max_age
+    if max_age is not None:
+        max_age = float(max_age)
     num_snaps = args.num_snaps
 
     calc(galname, max_age, num_snaps)
