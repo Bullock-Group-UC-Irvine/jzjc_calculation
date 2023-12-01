@@ -9,15 +9,16 @@ import scipy
 import sys
 from scipy import integrate
 
-#===========================================================================================
-#===========================Functions to get center coord and vel===========================
+#==============================================================================
+#==============Functions to get center coord and vel===========================
 
 def get_header(filepath):
     header_name_dict = {
             'GIZMO_version': 'gizmo.version',
             # 6-element array of number of particles of each type in file
             'NumPart_ThisFile': 'particle.numbers.in.file',
-            # 6-element array of total number of particles of each type (across all files)
+            # 6-element array of total number of particles of each type 
+            # (across all files)
             'NumPart_Total': 'particle.numbers.total',
             'NumPart_Total_HighWord': 'particle.numbers.total.high.word',
             # number of file blocks per snapshot
@@ -702,7 +703,8 @@ def get_center_velocities(
     return_single_array=False,
 ):
     '''
-    Get host/center velocity[s] [km / s] of input particle species that are within distance_max of
+    Get host/center velocity[s] [km / s] of input particle species that are 
+    within distance_max of
     center_positions, weighting particle velocities by input weight_property.
     If input multiple center_positions, compute a center velocity for each one.
 
@@ -717,7 +719,8 @@ def get_center_velocities(
         use this to exclude particles that you know are not relevant
         if list, use host_index to determine which list element to use
     weight_property : str
-        property to weight particles by: 'mass', 'potential', 'massfraction.metals'
+        property to weight particles by: 'mass', 'potential', 
+                                         'massfraction.metals'
     distance_max : float
         maximum radius to consider [kpc physical]
     center_positions : array or list of arrays
@@ -725,7 +728,8 @@ def get_center_velocities(
         if None, will use default center position[s] in catalog
         if list, compute a center velocity for each center position
     return_single_array : bool
-        whether to return single array instead of array of arrays, if input single center position
+        whether to return single array instead of array of arrays, if input 
+        single center position
     verbose : bool
         flag for verbosity in print diagnostics
 
