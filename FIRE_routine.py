@@ -606,8 +606,16 @@ def get_center_positions(
     return_single_array=False,
 ):
     '''
-    Get host/center position[s] [kpc comoving] via iterative zoom-in on input particle species,
-    weighting particle positions by input weight_property.
+    Get host/center position[s] [kpc comoving] via iterative zoom-in on input 
+    particle species,
+    weighting particle positions by input weight_property. If 
+    `center_number` > 1, the 0 element of the returned array is the center of
+    `weight_property` using all particles, while the subsequent N elements
+    are the centers
+    excluding particles within `exclusion_distance` of the N-1 centers.
+    Therefore, the returned centers are ordered from center of the most to
+    least `weight_property`ive (e.g. massive).
+
 
     Parameters
     ----------
@@ -619,17 +627,20 @@ def get_center_positions(
         indices of particles to use to compute center position[s]
         if a list, use different particles indices for different centers
     weight_property : str
-        property to weight particles by: 'mass'(, 'potential', 'massfraction.metals')
+        property to weight particles by: 'mass'(, 'potential', 
+                                                'massfraction.metals')
     center_number : int
         number of centers (hosts) to compute
     exclusion_distance : float
-        radius around previous center to cut out particles for finding next center [kpc comoving]
+        radius around previous center to cut out particles for finding next 
+        center [kpc comoving]
     center_positions : array or list of arrays
         initial position[s] to center on
     distance_max : float
         maximum distance around center_positions to use to select particles
     return_single_array : bool
-        whether to return single array instead of array of arrays, if center_number = 1
+        whether to return single array instead of array of arrays, if 
+        center_number = 1
 
     Returns
     -------
@@ -783,11 +794,11 @@ def assign_hosts_coordinates_from_particles(
     )
     return host_center, host_velocity
 
-#===========================================================================================
-#===========================================================================================
+#==============================================================================
+#==============================================================================
 
-#===========================================================================================
-#===========================Functions to Rotate the system to z-axis===========================
+#==============================================================================
+#===========Functions to Rotate the system to z-axis===========================
 
 def coord_to_r(coord, cen_deduct = False, cen_coord = np.zeros(3)):
     
