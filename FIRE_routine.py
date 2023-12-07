@@ -9,15 +9,16 @@ import scipy
 import sys
 from scipy import integrate
 
-#===========================================================================================
-#===========================Functions to get center coord and vel===========================
+#==============================================================================
+#==============Functions to get center coord and vel===========================
 
 def get_header(filepath):
     header_name_dict = {
             'GIZMO_version': 'gizmo.version',
             # 6-element array of number of particles of each type in file
             'NumPart_ThisFile': 'particle.numbers.in.file',
-            # 6-element array of total number of particles of each type (across all files)
+            # 6-element array of total number of particles of each type 
+            # (across all files)
             'NumPart_Total': 'particle.numbers.total',
             'NumPart_Total_HighWord': 'particle.numbers.total.high.word',
             # number of file blocks per snapshot
@@ -606,8 +607,16 @@ def get_center_positions(
     return_single_array=False,
 ):
     '''
-    Get host/center position[s] [kpc comoving] via iterative zoom-in on input particle species,
-    weighting particle positions by input weight_property.
+    Get host/center position[s] [kpc comoving] via iterative zoom-in on input 
+    particle species,
+    weighting particle positions by input weight_property. If 
+    `center_number` > 1, the 0 element of the returned array is the center of
+    `weight_property` using all particles, while the subsequent N elements
+    are the centers
+    excluding particles within `exclusion_distance` of the N-1 centers.
+    Therefore, the returned centers are ordered from center of the most to
+    least `weight_property`ive (e.g. massive).
+
 
     Parameters
     ----------
@@ -619,17 +628,20 @@ def get_center_positions(
         indices of particles to use to compute center position[s]
         if a list, use different particles indices for different centers
     weight_property : str
-        property to weight particles by: 'mass'(, 'potential', 'massfraction.metals')
+        property to weight particles by: 'mass'(, 'potential', 
+                                                'massfraction.metals')
     center_number : int
         number of centers (hosts) to compute
     exclusion_distance : float
-        radius around previous center to cut out particles for finding next center [kpc comoving]
+        radius around previous center to cut out particles for finding next 
+        center [kpc comoving]
     center_positions : array or list of arrays
         initial position[s] to center on
     distance_max : float
         maximum distance around center_positions to use to select particles
     return_single_array : bool
-        whether to return single array instead of array of arrays, if center_number = 1
+        whether to return single array instead of array of arrays, if 
+        center_number = 1
 
     Returns
     -------
@@ -691,7 +703,8 @@ def get_center_velocities(
     return_single_array=False,
 ):
     '''
-    Get host/center velocity[s] [km / s] of input particle species that are within distance_max of
+    Get host/center velocity[s] [km / s] of input particle species that are 
+    within distance_max of
     center_positions, weighting particle velocities by input weight_property.
     If input multiple center_positions, compute a center velocity for each one.
 
@@ -706,7 +719,8 @@ def get_center_velocities(
         use this to exclude particles that you know are not relevant
         if list, use host_index to determine which list element to use
     weight_property : str
-        property to weight particles by: 'mass', 'potential', 'massfraction.metals'
+        property to weight particles by: 'mass', 'potential', 
+                                         'massfraction.metals'
     distance_max : float
         maximum radius to consider [kpc physical]
     center_positions : array or list of arrays
@@ -714,7 +728,8 @@ def get_center_velocities(
         if None, will use default center position[s] in catalog
         if list, compute a center velocity for each center position
     return_single_array : bool
-        whether to return single array instead of array of arrays, if input single center position
+        whether to return single array instead of array of arrays, if input 
+        single center position
     verbose : bool
         flag for verbosity in print diagnostics
 
@@ -783,11 +798,11 @@ def assign_hosts_coordinates_from_particles(
     )
     return host_center, host_velocity
 
-#===========================================================================================
-#===========================================================================================
+#==============================================================================
+#==============================================================================
 
-#===========================================================================================
-#===========================Functions to Rotate the system to z-axis===========================
+#==============================================================================
+#===========Functions to Rotate the system to z-axis===========================
 
 def coord_to_r(coord, cen_deduct = False, cen_coord = np.zeros(3)):
     
