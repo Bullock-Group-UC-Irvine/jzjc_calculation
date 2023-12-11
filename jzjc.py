@@ -392,8 +392,14 @@ def getoptions():
     import argparse
     desc = 'Calculate jz/jc and j/jc for a given galaxy'
     parser = argparse.ArgumentParser(description=desc)
-    parser.add_argument('galname', nargs=1, 
-                        help='Name of the galaxy to analyze')
+    parser.add_argument(
+        'galname', 
+        nargs=1, 
+        help=('Name of the galaxy to analyze. Latte galaxies'
+              ' start with a lowercase \'m\', e.g. m12i. ELVIS'
+              ' galaxies start with a capital letter, e.g. '
+              ' Romeo.')
+    )
     parser.add_argument(
         '-m', 
         '--max-age', 
