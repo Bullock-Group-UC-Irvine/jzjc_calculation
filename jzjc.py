@@ -390,9 +390,8 @@ def getoptions():
         An object containing the options specified by the user
     '''
     import argparse
-    usage = '%(prog)s [options] galname'
     desc = 'Calculate jz/jc and j/jc for a given galaxy'
-    parser = argparse.ArgumentParser(usage=usage, description=desc)
+    parser = argparse.ArgumentParser(description=desc)
     parser.add_argument('galname', nargs=1, 
                         help='Name of the galaxy to analyze')
     parser.add_argument(
