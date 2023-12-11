@@ -17,7 +17,7 @@ except:
         'You need a paths.py file in your `jzjc_calculation` folder to specify'
         ' where certain directories are for you. For example, one line of'
         ' paths.py might specify where you want to save your results with\n'
-        '    data = \'/data17/grenache/your_username\''
+        '    data = \'/data17/grenache/your_username/\''
     )
 
 def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):

@@ -16,5 +16,5 @@ This file should not be added to the git repo but should be in the `jzjc_calcula
 ~~~
 # paths.py
 
-data = '/data17/grenache/your_username/jzjc_results'
+data = '/data17/grenache/your_username/jzjc_results/'
 ~~~
