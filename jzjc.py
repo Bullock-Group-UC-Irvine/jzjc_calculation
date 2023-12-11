@@ -146,7 +146,6 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
 
             f_star.close()
 
-
         print('Center located for '+ str(host_num)+' host(s)!')
         print(host_center)
         print(host_velocity)
@@ -155,7 +154,6 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
             raise ValueError('# of host(s) assigned not consistent with the # of the coords/vel got for the host(s)!')
         
         for ii in range(0,host_num):
-             
             print('Start calculation for host'+str(ii))
             part['star']['radius'] = header['scalefactor'] * coord_to_r(
                 part['star']['position'], 
@@ -190,7 +188,6 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
                 elif ii == 1:
                     m_vir = np.array(halo['mass.vir'])[host2_ind]
                     r90_star_rockstar = r90_star_rockstar_arr[host2_ind]
-                halo.close()
                 z = 1/header['scalefactor'] - 1
                 r_vir = virial_radius(
                     m_vir, 
@@ -378,6 +375,7 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
             ###################################################################
 
             df.close()
+        halo.close()
     return None
 
 def getoptions():
@@ -392,7 +390,7 @@ def getoptions():
         An object containing the options specified by the user
     '''
     import argparse
-    usage = '%(prog)s galname'
+    usage = '%(prog)s [options] galname'
     desc = 'Calculate jz/jc and j/jc for a given galaxy'
     parser = argparse.ArgumentParser(usage=usage, description=desc)
     parser.add_argument('galname', nargs=1, 
