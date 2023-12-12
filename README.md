@@ -2,7 +2,7 @@
 Scripts for saving hdf5 files with $j_{\rm z}/j_{\rm c}$ and $j/j_{\rm c}$ for a given FIRE galaxy
 
 ## Using `jzjc.py`
-`jzjc.calculation` is an executable script. Navigate to the `jzjc_calculation` folder. Then the user can execute
+`jzjc.py` is an executable script. Navigate to the `jzjc_calculation` folder. Then the user can execute
 
 ~~~
 python jzjc.py --help
