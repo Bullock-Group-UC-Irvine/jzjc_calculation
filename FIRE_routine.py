@@ -939,6 +939,7 @@ def get_r_vs_M(part, r_max = None, numpoints = 50000, save_file = None):
     
         # interpolate all of these to the same radii. Don't want to break at 0, so..
         r_grid = np.linspace(0.01, r_max, numpoints)
+        #r_grid = np.logspace(np.log10(0.01), np.log10(400), 100)
         Mstar_cum, Mgas_cum, Mdark_cum = np.interp(r_grid, r_star, star_mass_cum), \
             np.interp(r_grid, r_gas, gas_mass_cum), np.interp(r_grid, r_dark, dark_mass_cum)
     
@@ -960,6 +961,7 @@ def get_r_vs_M(part, r_max = None, numpoints = 50000, save_file = None):
         star_mass_cum, dark_mass_cum = np.cumsum(m_star[star_indices]), np.cumsum(m_dark[dark_indices])
     
         # interpolate all of these to the same radii. Don't want to break at 0, so..
+        #r_grid = np.logspace(np.log10(0.01), np.log10(400), 100)
         r_grid = np.linspace(0.01, r_max, numpoints)
         Mstar_cum, Mdark_cum = np.interp(r_grid, r_star, star_mass_cum), np.interp(r_grid, r_dark, dark_mass_cum)
         Mtot_cum = Mstar_cum + Mdark_cum
@@ -1164,7 +1166,7 @@ def read_part(snapdir_path):
         ) #Unit: km/s
     part['star']['id'] = get_data(snapdir_path, 'PartType4', 'ParticleIDs')
     part['star']['sft_a'] = get_data(snapdir_path, 'PartType4', 'StellarFormationTime')
-
+    part['star']['metallicity'] = get_data(snapdir_path,'PartType4','Metallicity')
     part['gas'] = {}
     part['gas']['position'] = convert_coord_comoving(
         get_data(snapdir_path,'PartType0','Coordinates') ,
@@ -1178,7 +1180,9 @@ def read_part(snapdir_path):
         get_data(snapdir_path,'PartType0','Velocities') ,
         header['scalefactor'],
         ) #Unit: km/s
-
+    part['gas']['id'] = get_data(snapdir_path, 'PartType0', 'ParticleIDs')
+    part['gas']['metallicity'] = get_data(snapdir_path,'PartType0', 'Metallicity')
+    
     part['dark'] = {}
     part['dark']['position'] = convert_coord_comoving(
         get_data(snapdir_path,'PartType1','Coordinates') ,
@@ -1193,3 +1197,180 @@ def read_part(snapdir_path):
         header['scalefactor'],
         ) #Unit: km/s
     return part, header
+
+# Commenting this because it's already in UCI_tools.tools -PS
+#def fe_over_h_ratios(mfrac,he_frac,fe_frac):
+#    h_frac=1-mfrac-he_frac
+#    #...some constants
+#    sun_fe_h_frac = 0.0030/91.2
+#    mass_h = 1.0084 # in Atomic Mass Units
+#    mass_fe= 55.845 # in Atomic Mass Units
+#    #...Need to convert mass fractions to number fractions
+#    fe_h_num = (fe_frac/h_frac)*(mass_h/mass_fe)
+#    #...Abundance ratio
+#    ab_fe_h = np.asarray(np.log10(fe_h_num/sun_fe_h_frac))
+#    return ab_fe_h
+
+def mg_over_fe_ratios(mg_frac,fe_frac):
+    #...some constants
+    sun_mg_fe_frac = 0.0038/0.0030
+    mass_mg = 24.305
+    mass_fe= 55.845 # in Atomic Mass Units
+    #...Need to convert mass fractions to number fractions
+    mg_fe_num = (mg_frac/fe_frac)*(mass_fe/mass_mg)
+    #...Abundance ratio
+    ab_mg_fe = np.asarray(np.log10(mg_fe_num/sun_mg_fe_frac))
+    return ab_mg_fe
+
+def o_over_fe_ratios(o_frac,fe_frac):
+    #...some constants
+    sun_o_fe_frac = 0.078/0.0030
+    mass_o = 15.995
+    mass_fe= 55.845 # in Atomic Mass Units
+    #...Need to convert mass fractions to number fractions
+    o_fe_num = (o_frac/fe_frac)*(mass_fe/mass_o)
+    #...Abundance ratio
+    ab_o_fe = np.asarray(np.log10(o_fe_num/sun_o_fe_frac))
+    return ab_o_fe
+
+# Commenting this because it's already in UCI_tools.tools -PS
+#def calc_cyl_vels(v_vecs_rot, coords_rot):
+#    '''
+#    Put velocities into cylindrical coordinates given Cartesian velocites and 
+#    coordinates. These velocity and coordinate arguments should be centered and
+#    rotated so their z components align with the total angular momentum of the
+#    galaxy's stars (i.e. so their z component is perpendicular to the disc).
+#    
+#    Parameters
+#    ----------
+#    v_vecs_rot: np.ndarray, shape=(number of particles, 3)
+#        Velocity vectors in Cartesian coordinates rotated so their z-axis 
+#        aligns with the angular
+#        momentum vector of the stars.
+#    coords_rot: np.ndarray, shpae=(number of particles, 3)
+#        Position vectors in Cartesian coordinates rotated so their z-axis
+#        aligns with the angular momentum vector of the stars.
+#    
+#    Returns
+#    -------
+#    d: dict
+#        Dictionary containing the velocity information for the particles.
+#        It contains the folowing key, value pairs.
+#        'v_vec_disc': Only x and y components of velocity
+#        'coord_disc': Only x and y components of coordinates
+#        'v_dot_rhat': The r (scalar) component of velocity, where 
+#            d['coord_disc'] gives
+#            the r vector (can be negative if the projection of velocity along r
+#            points in the opposite direction of r)
+#        'v_r_vec': The projection of velocity along the r vector, expressed in
+#            Cartesian x and y components
+#        'v_phi_vec': The projection of velocity along the phi vector, expressed
+#            in Cartesian x and y components
+#        'v_phi_mag': The magnitude of the projection of velocity along the phi
+#            vector (always positive)
+#        'v_dot_phihat': The phi (scalar) component of velocity (can be negative
+#            if the projection of velocity along phi points in the opposite
+#            direction of phi)
+#    '''
+#
+#    #xy component of velocity
+#    v_vec_disc = v_vecs_rot[:,:2] 
+#    #xy component of coordinates
+#    coord_disc = coords_rot[:,:2] 
+#
+#    ###################################################################
+#    ## Find the projection of velocity onto the xy vector (i.e. v_r) 
+#    ## v_r = v dot r / r^2 * r 
+#    ###################################################################
+#    vdotrs = np.sum(v_vec_disc \
+#                   * coord_disc, axis=1)
+#    rmags = np.linalg.norm(coord_disc, axis=1)
+#    v_dot_rhat = vdotrs / rmags
+#
+#    #v dot r / r^2
+#    vdotrs_r2 = (vdotrs \
+#        / np.linalg.norm(coord_disc, axis=1) **2.)
+#    #Need to reshape v dot r / r^2 so its shape=(number of particles,1)
+#    #so we can mutilpy those scalars by the r vector
+#    vdotrs_r2 = vdotrs_r2.reshape(len(coord_disc), 1)
+#    v_r_vec = vdotrs_r2 * coord_disc
+#    ###################################################################
+#
+#    #v_phi is the difference of the xy velocity and v_r
+#    v_phi_vec = v_vec_disc - v_r_vec
+#    v_phi_mag = np.linalg.norm(v_phi_vec,axis=1)
+#
+#    ###################################################################
+#    ## Finding the vphi in \vec{vphi} = vphi * \hat{vphi} 
+#    ## (i.e. v dot phi )
+#    ## Note v_phi_mag = |v dot phi|, and we want to determine whether
+#    ## v dot phi is positive or negative.
+#    ###################################################################
+#    rxvs = np.cross(coord_disc, 
+#                    v_vec_disc) #r cross v
+#    # v dot phi is positive if the z component of r cross v is 
+#    # positive,
+#    # because this means its angular momentum is in the same direction
+#    # as the disc's.
+#    signs = rxvs/np.abs(rxvs) 
+#    v_dot_phihat = v_phi_mag*signs
+#    ###################################################################
+#
+#    return v_dot_phihat
+
+def get_circ_vel(r_vs_M):
+    r = r_vs_M[0]
+    m = r_vs_M[1]
+    
+    G = 4.302e-6
+    v = np.sqrt(G*m/r)
+
+    return np.vstack((r, v))
+
+def get_accel(r_vs_M):
+    r = r_vs_M[0]
+    m = r_vs_M[1]
+    
+    G = 4.302e-6
+    a = G*m/np.square(r)
+
+    return np.vstack((r,a))
+
+def delta_vir(z,omegaM,omegaL): # The virial overdensity from Bryan & Norman (1998)
+    Omega = omegaM*np.power(1.+z,3) / (omegaM*np.power(1.+z,3) + omegaL)
+    x = Omega - 1.
+    return (18.*np.pi**2. + 82.*x - 39.*x**2.)
+
+def rho_crit(z,omegaM,omegaL,h0):
+    H0=100*h0 * np.sqrt(omegaM*np.power(1.+z,3)+omegaL)
+    H=H0/3.09e+19 # 1/s
+    G = 6.67408e-11/1000/1000/1000 # Converson of m^3/kg/s^2 --> km^3/kg/s^2
+    return 3. * H**2. /(8*np.pi*G) # kg/km^3
+
+def virial_radius(Mvir,z,omegaM,omegaL,h0):
+    Mvir = np.float64(Mvir*h0) * 1.989e+30 # Conversion of Msol --> kg
+    dvir = delta_vir(z,omegaM,omegaL)
+    rhoc = rho_crit(z,omegaM,omegaL,h0)
+    return np.power(3. * Mvir/dvir/rhoc/(4.*np.pi), 1./3) * 3.24078e-17 #      km --> kpc
+
+def get_r90(nrad,nmass,fullmass):
+    mass90 = fullmass*0.9
+    ind_sort = np.argsort(nrad)
+    snrad = nrad[ind_sort]
+    snmass = nmass[ind_sort]
+    mass_append = 0
+    ind_append = 0
+    while(mass_append < mass90 and ind_append < len(snmass)):
+        mass_append += snmass[ind_append]
+        r90 = snrad[ind_append]
+        ind_append+=1
+    return r90
+
+def get_r_peak_over_r90(r, v, r90):
+    aux = r < 15
+    r = r[aux]
+    v = v[aux]
+    ind = np.argmax(v)
+    r_peak = r[ind]
+    
+    return r_peak/r90

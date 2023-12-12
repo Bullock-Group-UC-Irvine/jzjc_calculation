@@ -30,8 +30,8 @@ def get_fname(galname, snapdir_num, max_age):
 
     return fname
 
-
-def calc_thin_frac(galname, snapdir_num=600, max_age=None):
+def calc_gal_fracs(galname, thin_jzjc, thick_jzjc, 
+                  snapdir_num=600, max_age=None):
     import h5py
     import scipy
     import numpy as np
@@ -42,18 +42,15 @@ def calc_thin_frac(galname, snapdir_num=600, max_age=None):
         masses = f['masses'][:]
         jzjcs = f['jzjc'][:]
 
-    ps, jzjc_bins = np.histogram(jzjcs, bins=200, density=True, weights=masses)
-    #mid_bins = (jzjc_bins[1:] + jzjc_bins[:-1]) / 2.
-    djzjcs = jzjc_bins[1:] - jzjc_bins[:-1] # dx in our integral
-    # If the leading edge of the jzjc bin >= 0.8, that that bin is in the thin 
-    # disk:
-    is_thin = jzjc_bins[:-1] >= 0.8 
+    M = masses.sum()
+    in_thin = jzjcs >= thin_jzjc 
+    thin_frac = masses[in_thin].sum() / M
+    in_thick = jzjcs >= thick_jzjc 
+    thick_frac = masses[in_thick].sum() / M
 
-    thin_frac = (ps[is_thin] * djzjcs[is_thin]).sum()
+    return thin_frac, thick_frac
 
-    return thin_frac
-
-def calc_all_thin_fracs(snapdir_num=600, max_age=None):
+def calc_all_fracs(snapdir_num=600, max_age=None):
     import os
     import pandas as pd
     from UCI_tools import staudt_tools
@@ -62,11 +59,15 @@ def calc_all_thin_fracs(snapdir_num=600, max_age=None):
     for galname in df.index:
         fname = get_fname(galname, snapdir_num, max_age)
         if os.path.isfile(fname):
-            df.loc[galname, 'thin_frac'] = calc_thin_frac(
-                                               galname, 
-                                               snapdir_num, 
-                                               max_age
-                                           )
+            fracs = calc_gal_fracs(
+                        galname,
+                        thin_jzjc=0.8,
+                        thick_jzjc=0.2,
+                        snapdir_num=snapdir_num,
+                        max_age=max_age
+            )
+            df.loc[galname, 'thin_frac'] = fracs[0]
+            df.loc[galname, 'thick_frac'] = fracs[1]
 
     # For now, add a comparison to Anna
     annas_fracs = {
@@ -91,7 +92,7 @@ def calc_all_thin_fracs(snapdir_num=600, max_age=None):
     df = pd.concat([df, df_anna], axis=1)
 
     # Reorder the columns
-    cols = ['thin_frac', 'anna\'s frac']
+    cols = ['thick_frac', 'thin_frac', 'anna\'s frac']
     last_cols = [col for col in df.columns if col not in cols]
     cols.extend(last_cols)
     df = df[cols]
