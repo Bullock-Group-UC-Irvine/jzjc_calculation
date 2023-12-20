@@ -166,7 +166,7 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
                 cen_coord = host_center[ii],
                 ) # Unit: kpc physical
             part['dark']['radius'] = header['scalefactor'] * coord_to_r(
-                part['gas']['position'], 
+                part['dark']['position'], 
                 cen_deduct = True, 
                 cen_coord = host_center[ii],
                 ) # Unit: kpc physical
