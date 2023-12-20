@@ -1374,3 +1374,7 @@ def get_r_peak_over_r90(r, v, r90):
     r_peak = r[ind]
     
     return r_peak/r90
+
+def center_of_mass(mass,pos):
+    mtot = np.sum(mass)
+    return np.sum(mass * pos.transpose(),axis=1)/mtot
