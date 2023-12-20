@@ -9,15 +9,16 @@ import scipy
 import sys
 from scipy import integrate
 
-#===========================================================================================
-#===========================Functions to get center coord and vel===========================
+#==============================================================================
+#==============Functions to get center coord and vel===========================
 
 def get_header(filepath):
     header_name_dict = {
             'GIZMO_version': 'gizmo.version',
             # 6-element array of number of particles of each type in file
             'NumPart_ThisFile': 'particle.numbers.in.file',
-            # 6-element array of total number of particles of each type (across all files)
+            # 6-element array of total number of particles of each type 
+            # (across all files)
             'NumPart_Total': 'particle.numbers.total',
             'NumPart_Total_HighWord': 'particle.numbers.total.high.word',
             # number of file blocks per snapshot
@@ -606,8 +607,16 @@ def get_center_positions(
     return_single_array=False,
 ):
     '''
-    Get host/center position[s] [kpc comoving] via iterative zoom-in on input particle species,
-    weighting particle positions by input weight_property.
+    Get host/center position[s] [kpc comoving] via iterative zoom-in on input 
+    particle species,
+    weighting particle positions by input weight_property. If 
+    `center_number` > 1, the 0 element of the returned array is the center of
+    `weight_property` using all particles, while the subsequent N elements
+    are the centers
+    excluding particles within `exclusion_distance` of the N-1 centers.
+    Therefore, the returned centers are ordered from center of the most to
+    least `weight_property`ive (e.g. massive).
+
 
     Parameters
     ----------
@@ -619,17 +628,20 @@ def get_center_positions(
         indices of particles to use to compute center position[s]
         if a list, use different particles indices for different centers
     weight_property : str
-        property to weight particles by: 'mass'(, 'potential', 'massfraction.metals')
+        property to weight particles by: 'mass'(, 'potential', 
+                                                'massfraction.metals')
     center_number : int
         number of centers (hosts) to compute
     exclusion_distance : float
-        radius around previous center to cut out particles for finding next center [kpc comoving]
+        radius around previous center to cut out particles for finding next 
+        center [kpc comoving]
     center_positions : array or list of arrays
         initial position[s] to center on
     distance_max : float
         maximum distance around center_positions to use to select particles
     return_single_array : bool
-        whether to return single array instead of array of arrays, if center_number = 1
+        whether to return single array instead of array of arrays, if 
+        center_number = 1
 
     Returns
     -------
@@ -691,7 +703,8 @@ def get_center_velocities(
     return_single_array=False,
 ):
     '''
-    Get host/center velocity[s] [km / s] of input particle species that are within distance_max of
+    Get host/center velocity[s] [km / s] of input particle species that are 
+    within distance_max of
     center_positions, weighting particle velocities by input weight_property.
     If input multiple center_positions, compute a center velocity for each one.
 
@@ -706,7 +719,8 @@ def get_center_velocities(
         use this to exclude particles that you know are not relevant
         if list, use host_index to determine which list element to use
     weight_property : str
-        property to weight particles by: 'mass', 'potential', 'massfraction.metals'
+        property to weight particles by: 'mass', 'potential', 
+                                         'massfraction.metals'
     distance_max : float
         maximum radius to consider [kpc physical]
     center_positions : array or list of arrays
@@ -714,7 +728,8 @@ def get_center_velocities(
         if None, will use default center position[s] in catalog
         if list, compute a center velocity for each center position
     return_single_array : bool
-        whether to return single array instead of array of arrays, if input single center position
+        whether to return single array instead of array of arrays, if input 
+        single center position
     verbose : bool
         flag for verbosity in print diagnostics
 
@@ -783,11 +798,11 @@ def assign_hosts_coordinates_from_particles(
     )
     return host_center, host_velocity
 
-#===========================================================================================
-#===========================================================================================
+#==============================================================================
+#==============================================================================
 
-#===========================================================================================
-#===========================Functions to Rotate the system to z-axis===========================
+#==============================================================================
+#===========Functions to Rotate the system to z-axis===========================
 
 def coord_to_r(coord, cen_deduct = False, cen_coord = np.zeros(3)):
     
@@ -1183,17 +1198,18 @@ def read_part(snapdir_path):
         ) #Unit: km/s
     return part, header
 
-def fe_over_h_ratios(mfrac,he_frac,fe_frac):
-    h_frac=1-mfrac-he_frac
-    #...some constants
-    sun_fe_h_frac = 0.0030/91.2
-    mass_h = 1.0084 # in Atomic Mass Units
-    mass_fe= 55.845 # in Atomic Mass Units
-    #...Need to convert mass fractions to number fractions
-    fe_h_num = (fe_frac/h_frac)*(mass_h/mass_fe)
-    #...Abundance ratio
-    ab_fe_h = np.asarray(np.log10(fe_h_num/sun_fe_h_frac))
-    return ab_fe_h
+# Commenting this because it's already in UCI_tools.tools -PS
+#def fe_over_h_ratios(mfrac,he_frac,fe_frac):
+#    h_frac=1-mfrac-he_frac
+#    #...some constants
+#    sun_fe_h_frac = 0.0030/91.2
+#    mass_h = 1.0084 # in Atomic Mass Units
+#    mass_fe= 55.845 # in Atomic Mass Units
+#    #...Need to convert mass fractions to number fractions
+#    fe_h_num = (fe_frac/h_frac)*(mass_h/mass_fe)
+#    #...Abundance ratio
+#    ab_fe_h = np.asarray(np.log10(fe_h_num/sun_fe_h_frac))
+#    return ab_fe_h
 
 def mg_over_fe_ratios(mg_frac,fe_frac):
     #...some constants
@@ -1217,89 +1233,90 @@ def o_over_fe_ratios(o_frac,fe_frac):
     ab_o_fe = np.asarray(np.log10(o_fe_num/sun_o_fe_frac))
     return ab_o_fe
 
-def calc_cyl_vels(v_vecs_rot, coords_rot):
-    '''
-    Put velocities into cylindrical coordinates given Cartesian velocites and 
-    coordinates. These velocity and coordinate arguments should be centered and
-    rotated so their z components align with the total angular momentum of the
-    galaxy's stars (i.e. so their z component is perpendicular to the disc).
-    
-    Parameters
-    ----------
-    v_vecs_rot: np.ndarray, shape=(number of particles, 3)
-        Velocity vectors in Cartesian coordinates rotated so their z-axis 
-        aligns with the angular
-        momentum vector of the stars.
-    coords_rot: np.ndarray, shpae=(number of particles, 3)
-        Position vectors in Cartesian coordinates rotated so their z-axis
-        aligns with the angular momentum vector of the stars.
-    
-    Returns
-    -------
-    d: dict
-        Dictionary containing the velocity information for the particles.
-        It contains the folowing key, value pairs.
-        'v_vec_disc': Only x and y components of velocity
-        'coord_disc': Only x and y components of coordinates
-        'v_dot_rhat': The r (scalar) component of velocity, where 
-            d['coord_disc'] gives
-            the r vector (can be negative if the projection of velocity along r
-            points in the opposite direction of r)
-        'v_r_vec': The projection of velocity along the r vector, expressed in
-            Cartesian x and y components
-        'v_phi_vec': The projection of velocity along the phi vector, expressed
-            in Cartesian x and y components
-        'v_phi_mag': The magnitude of the projection of velocity along the phi
-            vector (always positive)
-        'v_dot_phihat': The phi (scalar) component of velocity (can be negative
-            if the projection of velocity along phi points in the opposite
-            direction of phi)
-    '''
-
-    #xy component of velocity
-    v_vec_disc = v_vecs_rot[:,:2] 
-    #xy component of coordinates
-    coord_disc = coords_rot[:,:2] 
-
-    ###################################################################
-    ## Find the projection of velocity onto the xy vector (i.e. v_r) 
-    ## v_r = v dot r / r^2 * r 
-    ###################################################################
-    vdotrs = np.sum(v_vec_disc \
-                   * coord_disc, axis=1)
-    rmags = np.linalg.norm(coord_disc, axis=1)
-    v_dot_rhat = vdotrs / rmags
-
-    #v dot r / r^2
-    vdotrs_r2 = (vdotrs \
-        / np.linalg.norm(coord_disc, axis=1) **2.)
-    #Need to reshape v dot r / r^2 so its shape=(number of particles,1)
-    #so we can mutilpy those scalars by the r vector
-    vdotrs_r2 = vdotrs_r2.reshape(len(coord_disc), 1)
-    v_r_vec = vdotrs_r2 * coord_disc
-    ###################################################################
-
-    #v_phi is the difference of the xy velocity and v_r
-    v_phi_vec = v_vec_disc - v_r_vec
-    v_phi_mag = np.linalg.norm(v_phi_vec,axis=1)
-
-    ###################################################################
-    ## Finding the vphi in \vec{vphi} = vphi * \hat{vphi} 
-    ## (i.e. v dot phi )
-    ## Note v_phi_mag = |v dot phi|, and we want to determine whether
-    ## v dot phi is positive or negative.
-    ###################################################################
-    rxvs = np.cross(coord_disc, 
-                    v_vec_disc) #r cross v
-    # v dot phi is positive if the z component of r cross v is 
-    # positive,
-    # because this means its angular momentum is in the same direction
-    # as the disc's.
-    signs = rxvs/np.abs(rxvs) 
-    v_dot_phihat = v_phi_mag*signs
-    ###################################################################
-
-    return v_dot_phihat
+# Commenting this because it's already in UCI_tools.tools -PS
+#def calc_cyl_vels(v_vecs_rot, coords_rot):
+#    '''
+#    Put velocities into cylindrical coordinates given Cartesian velocites and 
+#    coordinates. These velocity and coordinate arguments should be centered and
+#    rotated so their z components align with the total angular momentum of the
+#    galaxy's stars (i.e. so their z component is perpendicular to the disc).
+#    
+#    Parameters
+#    ----------
+#    v_vecs_rot: np.ndarray, shape=(number of particles, 3)
+#        Velocity vectors in Cartesian coordinates rotated so their z-axis 
+#        aligns with the angular
+#        momentum vector of the stars.
+#    coords_rot: np.ndarray, shpae=(number of particles, 3)
+#        Position vectors in Cartesian coordinates rotated so their z-axis
+#        aligns with the angular momentum vector of the stars.
+#    
+#    Returns
+#    -------
+#    d: dict
+#        Dictionary containing the velocity information for the particles.
+#        It contains the folowing key, value pairs.
+#        'v_vec_disc': Only x and y components of velocity
+#        'coord_disc': Only x and y components of coordinates
+#        'v_dot_rhat': The r (scalar) component of velocity, where 
+#            d['coord_disc'] gives
+#            the r vector (can be negative if the projection of velocity along r
+#            points in the opposite direction of r)
+#        'v_r_vec': The projection of velocity along the r vector, expressed in
+#            Cartesian x and y components
+#        'v_phi_vec': The projection of velocity along the phi vector, expressed
+#            in Cartesian x and y components
+#        'v_phi_mag': The magnitude of the projection of velocity along the phi
+#            vector (always positive)
+#        'v_dot_phihat': The phi (scalar) component of velocity (can be negative
+#            if the projection of velocity along phi points in the opposite
+#            direction of phi)
+#    '''
+#
+#    #xy component of velocity
+#    v_vec_disc = v_vecs_rot[:,:2] 
+#    #xy component of coordinates
+#    coord_disc = coords_rot[:,:2] 
+#
+#    ###################################################################
+#    ## Find the projection of velocity onto the xy vector (i.e. v_r) 
+#    ## v_r = v dot r / r^2 * r 
+#    ###################################################################
+#    vdotrs = np.sum(v_vec_disc \
+#                   * coord_disc, axis=1)
+#    rmags = np.linalg.norm(coord_disc, axis=1)
+#    v_dot_rhat = vdotrs / rmags
+#
+#    #v dot r / r^2
+#    vdotrs_r2 = (vdotrs \
+#        / np.linalg.norm(coord_disc, axis=1) **2.)
+#    #Need to reshape v dot r / r^2 so its shape=(number of particles,1)
+#    #so we can mutilpy those scalars by the r vector
+#    vdotrs_r2 = vdotrs_r2.reshape(len(coord_disc), 1)
+#    v_r_vec = vdotrs_r2 * coord_disc
+#    ###################################################################
+#
+#    #v_phi is the difference of the xy velocity and v_r
+#    v_phi_vec = v_vec_disc - v_r_vec
+#    v_phi_mag = np.linalg.norm(v_phi_vec,axis=1)
+#
+#    ###################################################################
+#    ## Finding the vphi in \vec{vphi} = vphi * \hat{vphi} 
+#    ## (i.e. v dot phi )
+#    ## Note v_phi_mag = |v dot phi|, and we want to determine whether
+#    ## v dot phi is positive or negative.
+#    ###################################################################
+#    rxvs = np.cross(coord_disc, 
+#                    v_vec_disc) #r cross v
+#    # v dot phi is positive if the z component of r cross v is 
+#    # positive,
+#    # because this means its angular momentum is in the same direction
+#    # as the disc's.
+#    signs = rxvs/np.abs(rxvs) 
+#    v_dot_phihat = v_phi_mag*signs
+#    ###################################################################
+#
+#    return v_dot_phihat
 
 def get_circ_vel(r_vs_M):
     r = r_vs_M[0]
