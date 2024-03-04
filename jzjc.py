@@ -25,6 +25,10 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
     Calculates jz/jc and j/jc for the given galaxy. The method saves the
     results in the folder specified by paths.data.
 
+    If `galname` is an ELVIS galaxy, the code analyses both galaxies in the
+    pair. The resulting data file specifies 'halo0' for the larger galaxy,
+    'host1' for the smaller.
+
     Parameters
     ----------
     galname: str
@@ -61,6 +65,8 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
                + '_res' + gal_df.loc[galname, 'res']
     if galname in ['Romeo', 'Juliet', 'Romulus', 'Remus', 'Thelma', 'Louise']:
         # 2 hosts for ELVIS runs
+        # (If any ELVIS halo is specified, the code analyses both halos in the
+        # pair.)
         host_num = 2
     else:
         # 1 host for m12 runs
@@ -124,16 +130,19 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
             halo_pos = np.array(halo['position'])
             halo_vel = np.array(halo['velocity'])
             if 'host.index' in halo.keys():
+                # host1 is the larger host.
                 host1_ind = np.array(halo['host.index'])[0]
+                # host2 is the smaller host.
                 host2_ind = np.array(halo['host2.index'])[0]
             else:
                 # If the halo file doesn't tell us what the two main hosts are,
                 # we'll need to find them ourselves
                 ms_hals = halo['mass.vir'][:]
                 is_sorted = np.argsort(ms_hals) # sorted indices
-                host1_ind = is_sorted[-1]
-                host2_ind = is_sorted[-2]
+                host1_ind = is_sorted[-1] # largest host
+                host2_ind = is_sorted[-2] # second largest
 
+            # (`host_num` is determined above by the target galaxy's name.)
             if host_num == 1:
                 host_center = np.array([halo_pos[host1_ind]])
                 host_velocity = np.array([halo_vel[host1_ind]])
@@ -308,6 +317,8 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
                 source_str = '_rockstar'
             elif halo_source == 'particles':
                 source_str = '_com' # center of mass
+            # The file name specified 'host0' for the larger host, 'host1' for
+            # the smaller.
             fff = os.path.join(save_path, 
                                'id_jzjc_jjc_' \
                                    + snapdir_num + '_host' + str(ii)[0] \
