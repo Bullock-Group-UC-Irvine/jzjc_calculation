@@ -129,17 +129,21 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
             )
             halo_pos = np.array(halo['position'])
             halo_vel = np.array(halo['velocity'])
-            if 'host.index' in halo.keys():
-                # host1 is the larger host.
-                host1_ind = np.array(halo['host.index'])[0]
-                # host2 is the smaller host.
-                host2_ind = np.array(halo['host2.index'])[0]
-            else:
-                # If the halo file doesn't tell us what the two main hosts are,
-                # we'll need to find them ourselves
+            if ('host.index' not in halo.keys() 
+                    or (host_num > 1 and 'host2.index' not in halo.keys())):
+                # We'll need these two arrays for finding the what the two main
+                # hosts are ourselves.
                 ms_hals = halo['mass.vir'][:]
                 is_sorted = np.argsort(ms_hals) # sorted indices
+            if 'host.index' in halo.keys():
+                host1_ind = np.array(halo['host.index'])[0]
+                # host1 is the larger host.
+            else: 
                 host1_ind = is_sorted[-1] # largest host
+            if host_num > 1 and 'host2.index' in halo.keys():
+                host2_ind = np.array(halo['host2.index'])[0]
+                # host2 is the smaller host.
+            else:
                 host2_ind = is_sorted[-2] # second largest
 
             # (`host_num` is determined above by the target galaxy's name.)
