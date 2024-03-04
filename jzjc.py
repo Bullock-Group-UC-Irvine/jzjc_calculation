@@ -140,11 +140,12 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
                 # host1 is the larger host.
             else: 
                 host1_ind = is_sorted[-1] # largest host
-            if host_num > 1 and 'host2.index' in halo.keys():
-                host2_ind = np.array(halo['host2.index'])[0]
-                # host2 is the smaller host.
-            else:
-                host2_ind = is_sorted[-2] # second largest
+            if host_num > 1:
+                if 'host2.index' in halo.keys():
+                    host2_ind = np.array(halo['host2.index'])[0]
+                    # host2 is the smaller host.
+                else:
+                    host2_ind = is_sorted[-2] # second largest
 
             # (`host_num` is determined above by the target galaxy's name.)
             if host_num == 1:
