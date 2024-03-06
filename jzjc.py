@@ -308,20 +308,6 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
                 # w/sft <500Myr
                 young_mask = ( sft_lbt <= (snap_lbt + max_age) ) 
 
-                ###############################################################
-                # Testing
-                ###############################################################
-                from matplotlib import pyplot as plt
-
-                plt.hist(sft_lbt, bins=70)
-                plt.savefig('all_stars.png')
-                plt.close()
-
-                plt.hist(sft_lbt[young_mask], bins=70)
-                plt.savefig('young_stars.png')
-                plt.close()
-                ###############################################################
-
                 # Max stellar age string to use in the filename:
                 max_age_str = '_{0:0.0f}Myr'.format(max_age * 1.e3)
             else:
