@@ -93,12 +93,14 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
         print('H0 = '+str(header['hubble']))
         print('Om0 = '+str(header['omega_matter']))
         print('Build the FlatLambdaCDM based on the above params...')
+        h0 = header['hubble']
+        H0 = h0 * 100.
         cosmo = FlatLambdaCDM(
-            H0=header['hubble'], 
+            H0=H0,
             Om0=header['omega_matter'], 
             )
         snap_lbt_raw = cosmo.lookback_time(header['redshift'])
-        snap_lbt = np.array((snap_lbt_raw)) / 100.0 # Unit: Gyr
+        snap_lbt = np.array((snap_lbt_raw)) # Unit: Gyr
         print('Calculated redshift for the snapshot: ' 
               + str(header['redshift']))
         print('Calculated lookback time for the snapshot: {0:s}'
@@ -298,16 +300,27 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
 
             print('Select the particles to save based on SFT...')
             sft_lbt = np.array((cosmo.lookback_time(
-                1.0 / part['star']['sft_a'][host_mask] - 1.0 ))) / 100.0
+                1.0 / part['star']['sft_a'][host_mask] - 1.0 )))
             if max_age is not None:
                 print('(Only save particles younger than {0:0.0f} Gyr)'
                       .format(max_age))
                 # changed .1 to .5, july 31 7:33 pm, only grabs stars 
                 # w/sft <500Myr
                 young_mask = ( sft_lbt <= (snap_lbt+0.5) ) 
-                # I think the previous line is actually only grabbing stars 
-                # w/sft
-                # within 5 Myr of the given lookback time, not 500 Myr -PS
+
+                ###############################################################
+                # Testing
+                ###############################################################
+                from matplotlib import pyplot as plt
+
+                plt.hist(sft_lbt, bins=70)
+                plt.savefig('all_stars.png')
+                plt.close()
+
+                plt.hist(sft_lbt[young_mask], bins=70)
+                plt.savefig('young_stars.png')
+                plt.close()
+                ###############################################################
 
                 # Max stellar age string to use in the filename:
                 max_age_str = '_{0:0.0f}Myr'.format(max_age * 1.e3)
@@ -322,7 +335,7 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
                 source_str = '_rockstar'
             elif halo_source == 'particles':
                 source_str = '_com' # center of mass
-            # The file name specified 'host0' for the larger host, 'host1' for
+            # The file name specifies 'host0' for the larger host, 'host1' for
             # the smaller.
             fff = os.path.join(save_path, 
                                'id_jzjc_jjc_' \
