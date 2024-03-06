@@ -104,7 +104,7 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
         print('Calculated redshift for the snapshot: ' 
               + str(header['redshift']))
         print('Calculated lookback time for the snapshot: {0:s}'
-              .format(snap_lbt_raw.round(3).to_string()))
+              .format(snap_lbt_raw.round(4).to_string()))
         
         print('Start calculating the center...')
         if halo_source == 'particles':
@@ -302,11 +302,11 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
             sft_lbt = np.array((cosmo.lookback_time(
                 1.0 / part['star']['sft_a'][host_mask] - 1.0 )))
             if max_age is not None:
-                print('(Only save particles younger than {0:0.0f} Gyr)'
+                print('(Only save particles younger than {0:0.4f} Gyr)'
                       .format(max_age))
                 # changed .1 to .5, july 31 7:33 pm, only grabs stars 
                 # w/sft <500Myr
-                young_mask = ( sft_lbt <= (snap_lbt+0.5) ) 
+                young_mask = ( sft_lbt <= (snap_lbt + max_age) ) 
 
                 ###############################################################
                 # Testing
