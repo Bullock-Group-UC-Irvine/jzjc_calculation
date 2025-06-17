@@ -25,6 +25,10 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
     Calculates jz/jc and j/jc for the given galaxy. The method saves the
     results in the folder specified by paths.data.
 
+    If `galname` is an ELVIS galaxy, the code analyses both galaxies in the
+    pair. The resulting data file specifies 'halo0' for the larger galaxy,
+    'host1' for the smaller.
+
     Parameters
     ----------
     galname: str
@@ -61,6 +65,8 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
                + '_res' + gal_df.loc[galname, 'res']
     if galname in ['Romeo', 'Juliet', 'Romulus', 'Remus', 'Thelma', 'Louise']:
         # 2 hosts for ELVIS runs
+        # (If any ELVIS halo is specified, the code analyses both halos in the
+        # pair.)
         host_num = 2
     else:
         # 1 host for m12 runs
@@ -87,16 +93,18 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
         print('H0 = '+str(header['hubble']))
         print('Om0 = '+str(header['omega_matter']))
         print('Build the FlatLambdaCDM based on the above params...')
+        h0 = header['hubble']
+        H0 = h0 * 100.
         cosmo = FlatLambdaCDM(
-            H0=header['hubble'], 
+            H0=H0,
             Om0=header['omega_matter'], 
             )
         snap_lbt_raw = cosmo.lookback_time(header['redshift'])
-        snap_lbt = np.array((snap_lbt_raw)) / 100.0 # Unit: Gyr
+        snap_lbt = np.array((snap_lbt_raw)) # Unit: Gyr
         print('Calculated redshift for the snapshot: ' 
               + str(header['redshift']))
         print('Calculated lookback time for the snapshot: {0:s}'
-              .format(snap_lbt_raw.round(3).to_string()))
+              .format(snap_lbt_raw.round(4).to_string()))
         
         print('Start calculating the center...')
         if halo_source == 'particles':
@@ -123,17 +131,25 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
             )
             halo_pos = np.array(halo['position'])
             halo_vel = np.array(halo['velocity'])
-            if 'host.index' in halo.keys():
-                host1_ind = np.array(halo['host.index'])[0]
-                host2_ind = np.array(halo['host2.index'])[0]
-            else:
-                # If the halo file doesn't tell us what the two main hosts are,
-                # we'll need to find them ourselves
+            if ('host.index' not in halo.keys() 
+                    or (host_num > 1 and 'host2.index' not in halo.keys())):
+                # We'll need these two arrays for finding the what the two main
+                # hosts are ourselves.
                 ms_hals = halo['mass.vir'][:]
                 is_sorted = np.argsort(ms_hals) # sorted indices
-                host1_ind = is_sorted[-1]
-                host2_ind = is_sorted[-2]
+            if 'host.index' in halo.keys():
+                host1_ind = np.array(halo['host.index'])[0]
+                # host1 is the larger host.
+            else: 
+                host1_ind = is_sorted[-1] # largest host
+            if host_num > 1:
+                if 'host2.index' in halo.keys():
+                    host2_ind = np.array(halo['host2.index'])[0]
+                    # host2 is the smaller host.
+                else:
+                    host2_ind = is_sorted[-2] # second largest
 
+            # (`host_num` is determined above by the target galaxy's name.)
             if host_num == 1:
                 host_center = np.array([halo_pos[host1_ind]])
                 host_velocity = np.array([halo_vel[host1_ind]])
@@ -284,16 +300,13 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
 
             print('Select the particles to save based on SFT...')
             sft_lbt = np.array((cosmo.lookback_time(
-                1.0 / part['star']['sft_a'][host_mask] - 1.0 ))) / 100.0
+                1.0 / part['star']['sft_a'][host_mask] - 1.0 )))
             if max_age is not None:
-                print('(Only save particles younger than {0:0.0f} Gyr)'
+                print('(Only save particles younger than {0:0.4f} Gyr)'
                       .format(max_age))
                 # changed .1 to .5, july 31 7:33 pm, only grabs stars 
                 # w/sft <500Myr
-                young_mask = ( sft_lbt <= (snap_lbt+0.5) ) 
-                # I think the previous line is actually only grabbing stars 
-                # w/sft
-                # within 5 Myr of the given lookback time, not 500 Myr -PS
+                young_mask = ( sft_lbt <= (snap_lbt + max_age) ) 
 
                 # Max stellar age string to use in the filename:
                 max_age_str = '_{0:0.0f}Myr'.format(max_age * 1.e3)
@@ -308,6 +321,8 @@ def calc(galname, max_age=None, num_snaps=1, halo_source='rockstar'):
                 source_str = '_rockstar'
             elif halo_source == 'particles':
                 source_str = '_com' # center of mass
+            # The file name specifies 'host0' for the larger host, 'host1' for
+            # the smaller.
             fff = os.path.join(save_path, 
                                'id_jzjc_jjc_' \
                                    + snapdir_num + '_host' + str(ii)[0] \
